@@ -62,6 +62,7 @@ class Netsoul(asyncore.dispatcher):
                         print ('Authentication Failed')
                         sys.exit(1)
                     else:
+                        print ('Authentified')
                         self._isauth = True
                         self._state = 'actif'
                         self._buffer = bytes('state actif:' + str(int(time.time())) + '\n', 'utf8')
