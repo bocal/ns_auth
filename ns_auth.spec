@@ -16,7 +16,7 @@
 #
 
 Name:           ns_auth
-Version:	1.2
+Version:	1.3
 Release:	1
 License:	Bocal
 Summary:	ns_auth bocal
