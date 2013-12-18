@@ -17,7 +17,7 @@
 
 Name:           ns_auth
 Version:	1
-Release:	1
+Release:	2
 License:	Bocal
 Summary:	ns_auth bocal
 Url:	http://repo.epitech.eu/opensuse/

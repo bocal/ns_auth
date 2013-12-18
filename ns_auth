@@ -36,12 +36,16 @@ class Netsoul:
 
     def connect(self):
         try:
+            if self._verbose:
+                print ('Connecting to ' + self._host + ' on port ' + str(self._port))
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.connect((self._host, self._port))
             self._isconnected = True
             return True
         except:
-            print ("Couldn't connect to " + self._host)
+            if self._verbose:
+                print ("Couldn't connect to " + self._host + ' on port ' + str(self._port))
+            raise NetsoulConnectionError
 
     def _ns_auth_ag(self):
         self._buffer = b'auth_ag ext_user none none\n'
@@ -69,7 +73,10 @@ class Netsoul:
 
             for i in readfd:
                 if i == self._sock:
-                    rdata = self._sock.recv(4096).decode('utf8').strip('\n')
+                    try:
+                        rdata = self._sock.recv(4096).decode('utf8').strip('\n')
+                    except:
+                        raise NetsouConnectionError
 
                     if rdata == '':
                         raise NetsoulConnectionError
@@ -152,8 +159,8 @@ if __name__ == '__main__':
 
     while 1:
         ns = Netsoul(login=user, verbose=verbose, password=password)
-        ns.connect()
         try:
+            ns.connect()
             ns.loop()
         except NetsoulConnectionError:
             if verbose:
