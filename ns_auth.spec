@@ -25,7 +25,7 @@
 
 Name:           ns_auth
 Version:	1.3
-Release:	1
+Release:	2
 License:        BSD-2-Clause
 Summary:        Simple netsoul client
 BuildRequires:	python3
@@ -53,7 +53,7 @@ cp %{name}.py %{buildroot}%{_bindir}/%{name}
 %attr(755,root,root) %{_bindir}/%{name}
 
 %changelog
-* Fri Feb 28 2014 Emmanuel Vadot <elbarto@bocal.org> - 1.3-1
+* Fri Feb 28 2014 Emmanuel Vadot <elbarto@bocal.org> - 1.3-2
 - change arch to noarch
 - change licence to BSD-2-Clause
 - change group to Applications/Internet
