@@ -5,7 +5,7 @@
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted providing that the following conditions 
+# modification, are permitted providing that the following conditions
 # are met:
 # 1. Redistributions of source code must retain the above copyright
 #    notice, this list of conditions and the following disclaimer.
@@ -99,7 +99,7 @@ class Netsoul:
                     try:
                         rdata = self._sock.recv(4096).decode('utf8').strip('\n')
                     except:
-                        raise NetsouConnectionError
+                        raise NetsoulConnectionError
 
                     if rdata == '':
                         raise NetsoulConnectionError
