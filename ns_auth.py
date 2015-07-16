@@ -183,7 +183,7 @@ if __name__ == '__main__':
             verbose = True
         elif o in ('-u', '--user'):
             user = a
-        elif o in ('-d'):
+        elif o in ('-d', ):
             daemon = False
         else:
             usage()
