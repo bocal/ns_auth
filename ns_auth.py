@@ -161,13 +161,13 @@ def daemonize():
 
 
 def usage():
-    print ('Usage: ' + sys.argv[0] + ' [-u login] [-h] [-v]')
+    print ('Usage: ' + sys.argv[0] + ' [-u login] [-h] [-v] [-d]')
     sys.exit(0)
 
 if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'dhvu:',
-                                   ['help', 'verbose', 'user='])
+                                   ['demonize', 'help', 'verbose', 'user='])
     except getopt.GetoptError as e:
         print (e)
         usage()
@@ -183,7 +183,7 @@ if __name__ == '__main__':
             verbose = True
         elif o in ('-u', '--user'):
             user = a
-        elif o in ('-d', ):
+        elif o in ('-d', '--demonize'):
             daemon = False
         else:
             usage()
