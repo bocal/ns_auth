@@ -1,6 +1,4 @@
 #!/usr/bin/env python3.3
-
-#-
 # Copyright 2013-2014 Emmanuel Vadot <elbarto@bocal.org>
 # All rights reserved
 #
@@ -35,11 +33,15 @@ import sys
 import getopt
 import os
 
+
 class NetsoulConnectionError(BaseException):
     '''Disconnected'''
 
+
 class Netsoul:
-    def __init__(self, login, password=None, host='ns-server.epitech.net', port=4242, verbose=False):
+
+    def __init__(self, login, password=None,
+                 host='ns-server.epitech.net', port=4242, verbose=False):
         self._host = host
         self._port = port
         self._login = login
@@ -60,14 +62,16 @@ class Netsoul:
     def connect(self):
         try:
             if self._verbose:
-                print ('Connecting to ' + self._host + ' on port ' + str(self._port))
+                print ('Connecting to ' + self._host + ' on port ' +
+                       str(self._port))
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.connect((self._host, self._port))
             self._isconnected = True
             return True
         except:
             if self._verbose:
-                print ("Couldn't connect to " + self._host + ' on port ' + str(self._port))
+                print ("Couldn't connect to " + self._host + ' on port ' +
+                       str(self._port))
             raise NetsoulConnectionError
 
     def _ns_auth_ag(self):
@@ -79,25 +83,31 @@ class Netsoul:
     def _ns_ext_user_log(self):
         data = self._salut.split(' ')
         challenge = hashlib.md5()
-        challenge.update(bytes(data[2] + '-' + data[3] + '/' + data[4] + self._password, 'utf8'))
-        self._buffer = bytes('ext_user_log ' + self._login + ' ' + challenge.hexdigest() + ' ' + data[4] + ' ' + urllib.parse.quote('NSLOG 0.1') + '\n', 'utf8')
+        challenge.update(bytes(data[2] + '-' + data[3] + '/' + data[4] +
+                               self._password, 'utf8'))
+        self._buffer = bytes('ext_user_log ' + self._login + ' ' +
+                             challenge.hexdigest() + ' ' + data[4] + ' ' +
+                             urllib.parse.quote('NSLOG 0.1') + '\n', 'utf8')
         self._writefd.append(self._sock)
         self._next = self._ns_state
 
     def _ns_state(self):
         self._isauth = True
-        self._buffer = bytes('state actif:' + str(int(time.time())) + '\n', 'utf8')
+        self._buffer = bytes('state actif:' + str(int(time.time())) +
+                             '\n', 'utf8')
         self._writefd.append(self._sock)
         self._next = None
 
     def loop(self):
         while 1:
-            readfd, writefd, exceptfd = select.select([self._sock], self._writefd,[])
+            readfd, writefd, exceptfd = select.select([self._sock],
+                                                      self._writefd, [])
 
             for i in readfd:
                 if i == self._sock:
                     try:
-                        rdata = self._sock.recv(4096).decode('utf8').strip('\n')
+                        rdata = self._sock.recv(4096).decode('utf8') \
+                            .strip('\n')
                     except:
                         raise NetsoulConnectionError
 
@@ -127,6 +137,7 @@ class Netsoul:
                     self._sock.send(self._buffer)
                     self._writefd.remove(self._sock)
 
+
 def daemonize():
     try:
         pid = os.fork()
@@ -148,13 +159,15 @@ def daemonize():
         sys.stderr.write("os.fork() failed: %s\n" + e.strerror)
         sys.exit(1)
 
+
 def usage():
     print ('Usage: ' + sys.argv[0] + ' [-u login] [-h] [-v]')
     sys.exit(0)
 
 if __name__ == '__main__':
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'dhvu:', ['help', 'verbose', 'user='])
+        opts, args = getopt.getopt(sys.argv[1:], 'dhvu:',
+                                   ['help', 'verbose', 'user='])
     except getopt.GetoptError as e:
         print (e)
         usage()
