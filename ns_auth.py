@@ -68,7 +68,7 @@ class Netsoul:
             self._sock.connect((self._host, self._port))
             self._isconnected = True
             return True
-        except:
+        except Exception:
             if self._verbose:
                 print ("Couldn't connect to " + self._host + ' on port ' +
                        str(self._port))
@@ -164,41 +164,73 @@ def usage():
     print ('Usage: ' + sys.argv[0] + ' [-u login] [-h] [-v] [-d]')
     sys.exit(0)
 
+
+def load_config_file(filename):
+    import configparser
+
+    with open(filename, 'r') as f:
+        config = configparser.ConfigParser({
+            'login': None,
+            'password': None,
+            'host': None,
+            'port': None,
+        })
+        config.readfp(f)
+        return {
+            'login': config.get('config', 'login'),
+            'password': config.get('config', 'password'),
+            'host': config.get('config', 'host'),
+            'port': config.getint('config', 'port'),
+        }
+
+
+def merge_dict(x, y):
+    z = x.copy()
+    z.update(y)
+    return z
+
 if __name__ == '__main__':
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'dhvu:',
-                                   ['demonize', 'help', 'verbose', 'user='])
+        opts, args = getopt.getopt(sys.argv[1:], 'dhvu:f:',
+                                   ['demonize', 'help', 'verbose', 'user=',
+                                    'config-file='])
     except getopt.GetoptError as e:
         print (e)
         usage()
 
-    verbose = False
+    options = {'verbose': False, 'login': getpass.getuser()}
     daemon = True
-    user = getpass.getuser()
 
     for o, a in opts:
         if o in ('-h', '--help'):
             usage()
         elif o in ('-v', '--verbose'):
-            verbose = True
+            options['verbose'] = True
         elif o in ('-u', '--user'):
-            user = a
+            options['login'] = a
         elif o in ('-d', '--demonize'):
             daemon = False
+        elif o in ('-f', '--config-file'):
+            options = merge_dict(options, load_config_file(a))
         else:
             usage()
 
-    password = getpass.getpass()
+    if options.get('login', None) is None:
+        options['login'] = getpass.getuser()
+    if options.get('password', None) is None:
+        options['password'] = getpass.getpass()
+
+    print(options, daemon)
 
     if daemon:
         daemonize()
 
     while 1:
-        ns = Netsoul(login=user, verbose=verbose, password=password)
+        ns = Netsoul(**options)
         try:
             ns.connect()
             ns.loop()
         except NetsoulConnectionError:
-            if verbose:
+            if options['verbose']:
                 print ('Disconnected, retrying in 10 seconds')
             time.sleep(10)
