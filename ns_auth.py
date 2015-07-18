@@ -32,6 +32,7 @@ import getpass
 import sys
 import getopt
 import os
+import configparser
 
 
 class NetsoulConnectionError(BaseException):
@@ -42,8 +43,9 @@ class Netsoul:
 
     def __init__(self, login, password=None,
                  host='ns-server.epitech.net', port=4242, verbose=False):
+        print(login, password, host, port)
         self._host = host
-        self._port = port
+        self._port = int(port)
         self._login = login
         self._password = password
         self._verbose = verbose
@@ -165,29 +167,95 @@ def usage():
     sys.exit(0)
 
 
-def load_config_file(filename):
-    import configparser
+class ConfigHandler:
+    class NetsoulPasswordEncryption:
 
-    with open(filename, 'r') as f:
-        config = configparser.ConfigParser({
-            'login': None,
-            'password': None,
-            'host': None,
-            'port': None,
-        })
-        config.readfp(f)
-        return {
-            'login': config.get('config', 'login'),
-            'password': config.get('config', 'password'),
-            'host': config.get('config', 'host'),
-            'port': config.getint('config', 'port'),
-        }
+        _BLOCK_SIZE = 32
+        _PADDING = '8'
+
+        def __init__(self, AES, base64):
+            self._AES = AES
+            self._base64 = base64
+            s = socket.gethostname()
+            secret = s + (32 - len(s)) * '4'
+            self._c = self._AES.new(secret)
+
+        def _pad(self, s):
+            return s + (self._BLOCK_SIZE - len(s) % self._BLOCK_SIZE) \
+                * self._PADDING
+
+        def encrypt(self, s):
+            tmp = self._c.encrypt(self._pad(s))
+            return self._base64.b64encode(tmp).decode('ascii')
+
+        def decrypt(self, s):
+            val = self._c.decrypt(self._base64.b64decode(s)).decode("utf-8")
+            val = val.rstrip(self._PADDING)
+            if len(val) != 8:
+                raise Exception("Canno't decrypt password, please rewrite it")
+            return val
+
+    class NoEncryption:
+        def encrypt(self, s):
+            return s
+
+        def decrypt(self, s):
+            raise Exception("Canno't decrypt the password, please rewrite it")
+
+    _CONFIG_SECTION = 'config'
+
+    def __init__(self, config_file_path):
+        self.config_file_path = config_file_path
+
+    def get_config(self, name):
+        try:
+            return self.config.get(self._CONFIG_SECTION, name)
+        except configparser.NoOptionError:
+            return None
+
+    def check_password(self):
+        p = self.get_config('password')
+        if p is None:
+            return None
+        try:
+            from Crypto.Cipher import AES
+            import base64
+
+            cipher = self.NetsoulPasswordEncryption(AES, base64)
+        except ImportError:
+            print('Warning: pycrypt not available, no encryption will be used')
+            cipher = self.NoEncryption()
+        if len(p) == 8:
+            # Need to be encrypted
+            encrypted = cipher.encrypt(p)
+            self.config.set(self._CONFIG_SECTION, 'password', encrypted)
+            with open(self.config_file_path, 'w') as f:
+                self.config.write(f)
+            return p
+        else:
+            # Need be decrypted
+            decrypted = cipher.decrypt(p)
+            return decrypted
+
+    def load_config_file(self):
+        with open(self.config_file_path, 'r') as f:
+            self.config = configparser.ConfigParser()
+            self.config.readfp(f)
+            password = self.check_password()
+            value = {
+                'login': self.get_config('login'),
+                'password': password,
+                'host': self.get_config('host'),
+                'port': self.get_config('port'),
+            }
+            return value
 
 
 def merge_dict(x, y):
     z = x.copy()
     z.update(y)
     return z
+
 
 if __name__ == '__main__':
     try:
@@ -211,7 +279,8 @@ if __name__ == '__main__':
         elif o in ('-d', '--demonize'):
             daemon = False
         elif o in ('-f', '--config-file'):
-            options = merge_dict(options, load_config_file(a))
+            c = ConfigHandler(a)
+            options = merge_dict(options, c.load_config_file())
         else:
             usage()
 
@@ -219,8 +288,6 @@ if __name__ == '__main__':
         options['login'] = getpass.getuser()
     if options.get('password', None) is None:
         options['password'] = getpass.getpass()
-
-    print(options, daemon)
 
     if daemon:
         daemonize()
