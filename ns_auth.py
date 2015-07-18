@@ -33,6 +33,9 @@ import sys
 import getopt
 import os
 import configparser
+from uuid import getnode as get_mac
+import string
+import random
 
 
 class NetsoulConnectionError(BaseException):
@@ -170,14 +173,18 @@ def usage():
 class ConfigHandler:
     class NetsoulPasswordEncryption:
 
+        _CHARS = string.ascii_uppercase + string.digits
+        _SECRET_SIZE = 32
         _BLOCK_SIZE = 32
         _PADDING = '8'
 
         def __init__(self, AES, base64):
             self._AES = AES
             self._base64 = base64
-            s = socket.gethostname()
-            secret = s + (32 - len(s)) * '4'
+            seed = get_mac()
+            random.seed(seed)
+            secret = ''.join(random.choice(self._CHARS) for x in
+                             range(self._SECRET_SIZE))
             self._c = self._AES.new(secret)
 
         def _pad(self, s):
