@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python3
 # Copyright 2013-2014 Emmanuel Vadot <elbarto@bocal.org>
 # All rights reserved
 #
@@ -46,7 +46,6 @@ class Netsoul:
 
     def __init__(self, login, password=None,
                  host='ns-server.epitech.net', port=4242, verbose=False):
-        print(login, password, host, port)
         self._host = host
         self._port = int(port)
         self._login = login
@@ -72,6 +71,7 @@ class Netsoul:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.connect((self._host, self._port))
             self._isconnected = True
+            self.time_to_sleep = 1
             return True
         except Exception:
             if self._verbose:
@@ -230,7 +230,7 @@ class ConfigHandler:
 
             cipher = self.NetsoulPasswordEncryption(AES, base64)
         except ImportError:
-            print('Warning: pycrypt not available, no encryption will be used')
+            print('Warning: pycrypt not available, no encryption will be used for password')
             cipher = self.NoEncryption()
         if len(p) == 8:
             # Need to be encrypted
@@ -262,7 +262,6 @@ def merge_dict(x, y):
     z = x.copy()
     z.update(y)
     return z
-
 
 if __name__ == '__main__':
     try:
@@ -299,6 +298,7 @@ if __name__ == '__main__':
     if daemon:
         daemonize()
 
+    time_to_sleep = 1
     while 1:
         ns = Netsoul(**options)
         try:
@@ -306,5 +306,6 @@ if __name__ == '__main__':
             ns.loop()
         except NetsoulConnectionError:
             if options['verbose']:
-                print ('Disconnected, retrying in 10 seconds')
-            time.sleep(10)
+                print ('Disconnected, retrying in {:d} seconds'.format(time_to_sleep))
+            time.sleep(time_to_sleep)
+            time_to_sleep = time_to_sleep * 2
